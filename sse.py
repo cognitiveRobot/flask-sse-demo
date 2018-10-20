@@ -37,7 +37,7 @@ def log_temp(name):
         global temp_c
         temp_c = temp_c + 1
         q.put(temp_c)
-        print("temp added in the queue")
+        print("temp added: ", temp_c)
         gevent.sleep(0.5)
 
 humidity_c = 0
@@ -48,7 +48,7 @@ def log_humidity(name):
         global humidity_c
         humidity_c = humidity_c + 1000
         q.put(humidity_c)
-        print("humidity added in the queue")
+        print("humidity added: ", humidity_c)
         gevent.sleep(0.5)
 
 def event_stream():
