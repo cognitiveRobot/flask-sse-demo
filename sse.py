@@ -59,31 +59,6 @@ def event_stream():
         yield 'data: %s\n\n' % str(result)
         gevent.sleep(.5)
 
-def event():
-    """For something more intelligent, take a look at Redis pub/sub
-    stuff. A great example can be found here__.
-
-    __ https://github.com/jakubroztocil/chat
-
-    """
-    # print("Number sent")
-    yield 'data: ' + x+1 + '\n\n'
-
-    # while True:
-    #     yield 'data: ' + json.dumps(random.rand(1000).tolist()) + '\n\n'
-    #     print("Number sent")
-    #     gevent.sleep(1)
-
-# Create two threads as follows
-try:
-   th1 = threading.Thread(target=log_temp, args=("temp_logger",))
-   th2 = threading.Thread(target=log_humidity, args=("humidity_logger",))
-   th1.start()
-   th2.start()
-   print ("Thread(s) started..")
-except:
-   print ("Error: unable to start thread")
-
 @app.route('/')
 def index():
     print("Index requested")
@@ -96,4 +71,14 @@ def stream():
     return Response(event_stream(), mimetype="text/event-stream")
 
 if __name__ == "__main__":
-    WSGIServer(('', 5000), app).serve_forever()
+    # Create two threads as follows
+    try:
+       th1 = threading.Thread(target=log_temp, args=("temp_logger",))
+       th2 = threading.Thread(target=log_humidity, args=("humidity_logger",))
+       th1.start()
+       th2.start()
+       print ("Thread(s) started..")
+    except:
+        print ("Error: unable to start thread")
+    else:
+        WSGIServer(('', 5000), app).serve_forever()
