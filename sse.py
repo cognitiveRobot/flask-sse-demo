@@ -19,8 +19,45 @@ from gevent import monkey
 monkey.patch_all()
 from numpy import random
 from flask import Flask, json, Response, render_template
+from queue import Queue
+import threading
 
 app = Flask(__name__)
+app.debug = True
+
+q = Queue()
+
+x = 0
+
+temp_c = 0
+# Logging temp data
+def log_temp(name):
+    print("Starting " + name)
+    while True:
+        global temp_c
+        temp_c = temp_c + 1
+        q.put(temp_c)
+        print("temp added in the queue")
+        gevent.sleep(0.5)
+
+humidity_c = 0
+# Logging humidity data
+def log_humidity(name):
+    print("Starting " + name)
+    while True:
+        global humidity_c
+        humidity_c = humidity_c + 1000
+        q.put(humidity_c)
+        print("humidity added in the queue")
+        gevent.sleep(0.5)
+
+def event_stream():
+    print("Starting streaming")
+    while True:
+        result = q.get()
+        print(result)
+        yield 'data: %s\n\n' % str(result)
+        gevent.sleep(.5)
 
 def event():
     """For something more intelligent, take a look at Redis pub/sub
@@ -29,18 +66,34 @@ def event():
     __ https://github.com/jakubroztocil/chat
 
     """
-    while True:
-        yield 'data: ' + json.dumps(random.rand(1000).tolist()) + '\n\n'
-        gevent.sleep(0.2)
+    # print("Number sent")
+    yield 'data: ' + x+1 + '\n\n'
+
+    # while True:
+    #     yield 'data: ' + json.dumps(random.rand(1000).tolist()) + '\n\n'
+    #     print("Number sent")
+    #     gevent.sleep(1)
+
+# Create two threads as follows
+try:
+   th1 = threading.Thread(target=log_temp, args=("temp_logger",))
+   th2 = threading.Thread(target=log_humidity, args=("humidity_logger",))
+   th1.start()
+   th2.start()
+   print ("Thread(s) started..")
+except:
+   print ("Error: unable to start thread")
 
 @app.route('/')
 def index():
+    print("Index requested")
     return render_template('index.html')
 
 @app.route('/stream/', methods=['GET', 'POST'])
 def stream():
-    return Response(event(), mimetype="text/event-stream")
+    # gevent.sleep(1)
+    print("stream requested/posted")
+    return Response(event_stream(), mimetype="text/event-stream")
 
 if __name__ == "__main__":
     WSGIServer(('', 5000), app).serve_forever()
-    
